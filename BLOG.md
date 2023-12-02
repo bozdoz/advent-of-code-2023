@@ -1,5 +1,63 @@
 # What Am I Learning Each Day?
 
+### Day 2
+
+**Difficulty: 1/10 ★☆☆☆☆☆☆☆☆☆**
+
+**Time: 1 hr**
+
+**Run Time: 313.363µs**
+
+First time using `#[derive(Default)]`.  `Go` is nice for having this by default; felt like I wanted to use it for initializing a Game object:
+
+```rust
+#[derive(Default)]
+struct Game {
+    red: u32,
+    green: u32,
+    blue: u32,
+}
+
+let game = Game::default();
+```
+
+Rust does have a better way to debug these structs, however, than `go`; by just adding `#[derive(Debug)]`:
+
+```rust
+#[derive(Default, Debug)]
+struct Set {
+    red: u32,
+    green: u32,
+    blue: u32,
+}
+
+dbg!(Set::default());
+```
+
+First time using `panic`?  First time using `match`.  First time using `struct`.  Found out that panic accepts a format string:
+
+```rust
+n => panic!("not a color: {}", n)
+```
+
+I'm trying to avoid using `collect()`, because I feel like it's wasteful to convert to/from iterables so often:
+
+```rust
+let info: &str = line.split(": ").nth(1).unwrap();
+```
+
+I really need to learn all of the map methods for iterables, because I'm also probably unnecessarily doing far too many `for` loops.  It's day 2 and I'm already using a loop label to break out of nested loops.
+
+```rust
+'outer: for i in 0..games.len() {
+    continue 'outer;    
+}
+```
+
+I should be able to do a `reduce`, or a `filter_map` and `sum`.
+
+Didn't need ChatGPT or stackoverflow today.  Far too easy of a problem.  And, rust analyzer seems good enough at this point to help me debug errors.
+
 ### Day 1
 
 **Difficulty: 4/10 ★★★★☆☆☆☆☆☆**
