@@ -1,5 +1,172 @@
 # What Am I Learning Each Day?
 
+### Day 3
+
+**Difficulty: 4/10 ★★★★☆☆☆☆☆☆**
+
+**Time: 2 hrs**
+
+**Run Time: 11.244585ms**
+
+I can't stop the warnings about `dead_code` in tests.  No clue how to remove them.  Also, I need to get a test to fail in order to see print or dbg calls.  Kind of annoying.
+
+I wanted to dedicate/invest some time into getting a good grid struct with methods.  I'm not sure I accomplished that.  I did come up with what I thought was a good neighbouring cell algorithm:
+
+```rust
+struct Neighbours {
+    start: Cell,
+    end: Cell,
+    cur: Option<Cell>,
+}
+
+impl Neighbours {
+    // use Neighbours::new to avoid passing a `cur` value
+    fn new(start: Cell, end: Cell) -> Self {
+        Neighbours {
+            // get top-left of this cell
+            start: Cell { x: start.x - 1, y: start.y - 1 },
+            // get bottom-right of this cell
+            end: Cell {
+                x: end.x + 1,
+                y: end.y + 1,
+            },
+            // start at None to indicate first iteration
+            cur: None,
+        }
+    }
+}
+
+impl Iterator for Neighbours {
+    type Item = Cell;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // left -> right, top -> bottom
+        if self.cur.is_none() {
+            // start top-left!
+            self.cur = Some(self.start);
+
+            return self.cur;
+        }
+
+        // current is definitely defined
+        let mut cur = self.cur.unwrap();
+
+        // we're done if we reach the end
+        if cur == self.end {
+            return None;
+        }
+
+        // increase x
+        cur.x += 1;
+
+        // check if we hit the end of the row
+        if cur.x > self.end.x {
+            // wrap to next line
+            cur.y += 1;
+            cur.x = self.start.x;
+        // check if we're in the middle cells (not boundary)
+        } else if
+            cur.x != self.start.x &&
+            cur.x != self.end.y &&
+            cur.y != self.start.y &&
+            cur.y != self.end.y
+        {
+            // inside boundary
+            cur.x = self.end.x;
+        }
+
+        self.cur = Some(cur);
+
+        return self.cur;
+    }
+}
+```
+
+first time implementing `Iterator`.  Also I wanted to try implementing `FromStr`, which I did to convert the input string into a grid.
+
+```rust
+// so I can use .parse() on a string
+impl FromStr for Grid {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+```
+
+Felt a bit weird.  Not sure if I like it.  Might have just preferred a `new` function.
+
+I felt like I nested way too much today.
+
+I also ran into an issue for part one where I didn't account for numbers at the end of the lines.  Needed to add some logic to check if we're done of the row:
+
+```rust
+if next.is_digit(10) {
+    num =
+        num * 10 + (next.to_digit(10).unwrap() as i32);
+
+    // Doh! check if we're done the loop
+    if x != max {
+        continue;
+    } else {
+        // ignore the next line
+        char = '.';
+    }
+} else {
+    char = next;
+}
+```
+
+For part 2, I was able to just add a new variant to my cellvalue enum:
+
+```rust
+enum CellValue {
+    Symbol(char),
+    /** number, len */
+    Number(i32, isize),
+    /** end of a number points to the beginning (part two) */
+    Pointer(Cell),
+}
+```
+
+With the Pointer, I was able to reference a single cell, when the `*` symbol touched an end digit, like:
+
+```sh
+...
+..*
+123
+```
+
+The `*` touches 2 and 3, but I counted the cell value at the position of `1` (with a `len` of `3`).
+
+Wasn't too much work, but maybe it made for terrible code.
+
+For example, this is way too nested:
+
+```rust
+// iterate '*' signs and get those neighbours
+for (cell, value) in grid.cells.iter() {
+    if let CellValue::Symbol(sym) = value {
+        if sym == &'*' {
+            // get neighbouring numbers
+            // but avoid adding the same cell twice
+            let mut parts: HashMap<Cell, usize> = HashMap::new();
+
+            let start = *cell;
+            let end = *cell;
+            let neighbours = Neighbours::new(start, end);
+
+            for neigh in neighbours {
+                if let Some(n) = grid.cells.get(&neigh) {
+                    match n {
+                        CellValue::Number(v, _) => {
+                            parts.insert(neigh, *v as usize);
+                        }
+                        CellValue::Pointer(c) => {
+                            let p = grid.cells.get(c).unwrap();
+
+                            // how deep are we here?
+                            if let CellValue::Number(v, _) = p {
+```
+
 ### Day 2
 
 **Difficulty: 1/10 ★☆☆☆☆☆☆☆☆☆**
