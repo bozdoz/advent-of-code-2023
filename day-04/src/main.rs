@@ -31,7 +31,7 @@ impl Card {
     }
 }
 
-fn part_one(cards: &Vec<Card>) -> usize {
+fn part_one(cards: &[Card]) -> usize {
     cards.iter().map(|c| {
         if c.matches == 0 {
             return 0;
@@ -41,8 +41,9 @@ fn part_one(cards: &Vec<Card>) -> usize {
     }).sum()
 }
 
-fn part_two(cards: &Vec<Card>) -> usize {
-    let mut counts: Vec<usize> = cards.iter().map(|_| 1).collect();
+fn part_two(cards: &[Card]) -> usize {
+    // initialize counts vec to the size of cards, with values of `1`
+    let mut counts = vec![1; cards.len()];
     let len = counts.len() - 1;
 
     for (i, card) in cards.iter().enumerate() {
@@ -62,7 +63,7 @@ fn part_two(cards: &Vec<Card>) -> usize {
 
 fn get_cards(data: &str) -> Vec<Card> {
     data.lines()
-        .map(|line| { Card::new(line) })
+        .map(Card::new)
         .collect()
 }
 
