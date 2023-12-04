@@ -6,7 +6,7 @@ Continuing the tradition: https://github.com/bozdoz/advent-of-code-2022
 
 ### How to use
 
-Test: `🤷‍♀️`
+Test: `cargo test`
 
 Run: `cd day-01 && cargo run`
 
