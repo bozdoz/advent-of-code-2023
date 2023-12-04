@@ -11,3 +11,11 @@ Test: `🤷‍♀️`
 Run: `cd day-01 && cargo run`
 
 New: `./createDay.sh 02`
+
+### Help
+
+- [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+- [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb)
+- ChatGPT
+- [Reddit](https://reddit.com/r/adventofcode)
+- StackOverflow
