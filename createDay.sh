@@ -29,25 +29,21 @@ touch ./src/example.txt
 touch ./src/input.txt
 
 cat > src/main.rs <<EOF
-use std::{ time::Instant, fs };
+use std::time::Instant;
 use lib::get_part;
 
-const FILENAME: &str = "./src/example.txt";
-
-fn part_one() {
-
+fn part_one() -> usize {
+    0
 }
 
-fn part_two() {
-    
+fn part_two() -> usize {
+    0
 }
 
 fn main() {
     let (one, two) = get_part();
     let start = Instant::now();
-    let contents = fs
-        ::read_to_string(FILENAME)
-        .expect("couldn't open input file");
+    let contents = include_str!("./input.txt");
 
     if one {
         let now = Instant::now();
@@ -68,11 +64,13 @@ fn main() {
 mod tests {
     use super::*;
 
+    const EXAMPLE: &str = include_str!("./example.txt");
+
     #[test]
-    fn test_number_parser() {
+    fn test_part_one() {
         let ans = part_one();
 
-        assert_eq!(ans, ());
+        assert_eq!(ans, 0);
     }
 }
 EOF

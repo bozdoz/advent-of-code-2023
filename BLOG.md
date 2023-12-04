@@ -1,12 +1,121 @@
 # What Am I Learning Each Day?
 
+### Day 4
+
+**Difficulty: 1/10 ★☆☆☆☆☆☆☆☆☆**
+
+**Time: ~30 min**
+
+**Run Time: 810.604µs**
+
+Tried using `reduce`, but intellisense suggested `fold` instead.
+
+I was originally trying to get the score of each card:
+
+```rust
+// collect points; fold is basically reduce
+let points = want.iter().fold(0, |acc, n| {
+    if have.contains(n) {
+        if acc == 0 {
+            return 1;
+        }
+        return acc * 2;
+    }
+    acc
+});
+
+Card { want, have, points }
+```
+
+But this was much easier to just count the matches, and call a `pow` function later; also I didn't need to keep track of the numbers at all:
+
+```rust
+let matches = want.iter().filter(|n| {
+    have.contains(n)
+}).count();
+
+Card { matches }
+```
+
+And then part one:
+
+```rust
+fn part_one(cards: &Vec<Card>) -> usize {
+    cards.iter().map(|c| {
+        if c.matches == 0 {
+            return 0;
+        }
+
+        usize::pow(2, (c.matches - 1) as u32)
+    }).sum()
+}
+```
+
+I was surprised to learn how to use a `pow` function: somehow associated with the number type.
+
+I also tried to avoid using for loops, and instead just use vector or iterable methods. I still find this much more difficult to read, but seems easier to do.
+
+Part 2 seemed easy to refactor; I made a vec to match the cards vec of just a count, which started at 1:
+
+```rust
+let mut counts: Vec<usize> = cards.iter().map(|_| 1).collect();
+```
+
+Then just updated the counts in a for loop:
+
+```rust
+for (i, card) in cards.iter().enumerate() {
+    let j = if card.matches > len {
+        len
+    } else {
+        card.matches + i
+    };
+
+    for k in i+1..j+1 {
+        counts[k] += counts[i];
+    }
+}
+```
+
+I found out yesterday that you can get the actual reference to the vec items with `for card in cards`, which can be a problem in rust, since it would `move` the ownership or consume the value; however, you can convert the vec into an iterable, which returns a reference, and borrows the value (instead of move): `for card in cards.iter()`.  This is similar to go, when using a `range`:
+
+```go
+// card is reference
+for i, card := range cards {
+    // actual card
+    actual = cards[i];
+}
+```
+
+I'm using `include_str!` now for the inputs, which makes it easier to do TDD, and separate the example inputs from the actual inputs:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const EXAMPLE: &str = include_str!("./example.txt");
+
+    #[test]
+    fn test_part_one() {
+        let cards = get_cards(EXAMPLE);
+        
+        let ans = part_one(&cards);
+
+        assert_eq!(ans, 13);
+    }
+}
+```
+
+Today seemed incredibly easy, and I'm a bit surprised that I haven't run into any ownership issues since Day 1.  Maybe I'm getting the hang of borrowing, and iterating. I didn't even need a `Card` struct; could have just been `Vec<usize>`
+
 ### Day 3
 
 **Difficulty: 4/10 ★★★★☆☆☆☆☆☆**
 
 **Time: 2 hrs**
 
-**Run Time: 11.244585ms**
+**Run Time: 2.357162ms**
 
 I can't stop the warnings about `dead_code` in tests.  No clue how to remove them.  Also, I need to get a test to fail in order to see print or dbg calls.  Kind of annoying.
 
