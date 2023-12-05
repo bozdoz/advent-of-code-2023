@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{time::Instant, fs};
 use lib::get_part;
 
 struct Card {
@@ -70,9 +70,9 @@ fn get_cards(data: &str) -> Vec<Card> {
 fn main() {
     let (one, two) = get_part();
     let start = Instant::now();
-    let contents = include_str!("./input.txt");
+    let contents = fs::read_to_string("./src/input.txt").unwrap();
 
-    let cards = get_cards(contents);
+    let cards = get_cards(contents.as_str());
 
     if one {
         let now = Instant::now();

@@ -29,7 +29,7 @@ touch ./src/example.txt
 touch ./src/input.txt
 
 cat > src/main.rs <<EOF
-use std::time::Instant;
+use std::{time::Instant, fs};
 use lib::get_part;
 
 fn part_one() -> usize {
@@ -43,7 +43,7 @@ fn part_two() -> usize {
 fn main() {
     let (one, two) = get_part();
     let start = Instant::now();
-    let contents = include_str!("./input.txt");
+    let contents = fs::read_to_string("./src/input.txt").unwrap();
 
     if one {
         let now = Instant::now();

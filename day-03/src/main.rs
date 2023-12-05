@@ -1,4 +1,4 @@
-use std::{ time::Instant, collections::HashMap, str::FromStr };
+use std::{ time::Instant, collections::HashMap, str::FromStr, fs };
 use lib::get_part;
 
 #[derive(Debug, Eq, Hash, PartialEq, Copy, Clone)]
@@ -249,7 +249,7 @@ fn part_two(grid: &Grid) -> usize {
 fn main() {
     let (one, two) = get_part();
     let start = Instant::now();
-    let contents = include_str!("./input.txt");
+    let contents = fs::read_to_string("./src/input.txt").unwrap();
 
     let grid: Grid = contents.parse().expect("didn't get a grid?");
 
