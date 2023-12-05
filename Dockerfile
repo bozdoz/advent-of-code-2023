@@ -8,4 +8,4 @@ RUN useradd --create-home crustacean \
 
 USER crustacean
 
-COPY . .
+COPY --chown=crustacean:crustacean . .
