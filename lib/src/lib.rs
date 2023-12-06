@@ -23,3 +23,9 @@ pub fn get_part() -> (bool, bool) {
     
     (hasone, hastwo)
 }
+
+// TODO: do we need this?
+#[allow(dead_code)]
+fn lerp(x: usize, x1: usize, x2: usize, y1: usize, y2: usize) -> usize {
+    return y1 + ((y2 - y1) / (x2 - x1)) * (x - x1);
+}
