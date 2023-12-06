@@ -26,6 +26,9 @@
 	"containerEnv": {
 		"SHELL": "/bin/bash"
 	},
+	"mounts": [
+		"source=${localEnv:HOME}/.ssh,target=/home/crustacean/.ssh,type=bind,consistency=cached"
+	],	
 	"customizations": {
 		"vscode": {
 			"extensions": [
