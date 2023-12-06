@@ -105,7 +105,7 @@ impl Almanac {
 fn x_to_y_map(n: usize, mapping: &Mapping) -> Option<usize> {
     let (y, x, len) = *mapping;
 
-    if n < x || n > x + len {
+    if n < x || n >= x + len {
         return None;
     }
 
@@ -123,7 +123,7 @@ fn x_to_y_map(n: usize, mapping: &Mapping) -> Option<usize> {
 fn y_to_x_map(n: usize, mapping: &Mapping) -> Option<usize> {
     let (x, y, len) = *mapping;
 
-    if n < x || n > x + len {
+    if n < x || n >= x + len {
         return None;
     }
 

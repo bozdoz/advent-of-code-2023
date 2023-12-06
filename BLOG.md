@@ -2,11 +2,11 @@
 
 ### Day 5
 
-**Difficulty: ?/10 ★★★★★★★★☆☆☆**
+**Difficulty: 7/10 ★★★★★★★★☆☆☆**
 
 **Time: ~3 hr**
 
-**Run Time: ?µs**
+**Run Time: 1.3s**
 
 For part two I was just curious to try to brute force; though, in ~30 min I somehow kept getting `0` as the answer.  Thought maybe my usize was overflowing; really not sure where I'm going wrong.
 
@@ -42,6 +42,27 @@ None
 ```
 
 But still nada.
+
+Found it.  It was a `>=` instead of a `>`:
+
+```diff
+fn y_to_x_map(n: usize, mapping: &Mapping) -> Option<usize> {
+    let (x, y, len) = *mapping;
+
+-    if n < x || n > x + len {
++    if n < x || n >= x + len {
+        return None;
+    }
+```
+
+Maybe worth doing the refactor?  Had I spotted this earlier I could have done this challenge in less than an hour.  Due to waiting 30 min for brute forcing, I had to refactor to do a reverse search, which brought the time down to 1.3s.
+
+I used a custom type today to cut down on duplication:
+
+```rust
+/** (from, to, range len) */
+type Mapping = (usize, usize, usize);
+```
 
 ### Day 4
 
