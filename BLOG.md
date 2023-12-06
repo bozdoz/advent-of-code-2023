@@ -1,5 +1,48 @@
 # What Am I Learning Each Day?
 
+### Day 5
+
+**Difficulty: ?/10 ★★★★★★★★☆☆☆**
+
+**Time: ~3 hr**
+
+**Run Time: ?µs**
+
+For part two I was just curious to try to brute force; though, in ~30 min I somehow kept getting `0` as the answer.  Thought maybe my usize was overflowing; really not sure where I'm going wrong.
+
+Ignoring `0`, I keep getting the same answer.
+
+I refactored to do a reverse search, starting as low as `0` (which I know is not the correct answer), and I'm still getting the exact same answer (but it's incorrect).
+
+```rust
+fn part_two(almanac: &Almanac) -> usize {
+    let smallest = usize::MAX;
+
+    for l in 0usize.. {
+        // just go crazy
+        if almanac.location_to_seed(l).is_some() {
+            return l;
+        }
+    }
+
+    smallest
+}
+```
+
+I just literally made copies of the original functions and reversed them; adding some small logic to check if the final seed is within the original range:
+
+```rust
+for seed in self.seeds.chunks(2) {
+    if (seed[0]..seed[0]+seed[1]).contains(&cur) {
+        return Some(cur)
+    }
+}
+
+None
+```
+
+But still nada.
+
 ### Day 4
 
 **Difficulty: 1/10 ★☆☆☆☆☆☆☆☆☆**
