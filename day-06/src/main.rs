@@ -1,36 +1,27 @@
-#!/bin/bash
+use lib::get_part;
+use std::{fs, time::Instant};
 
-NEW_DAY=$1
-
-usage() {
-    cat >&2 <<END_USAGE
-
-Create a new boilerplate directory
-
-USAGE:
-    ./create-day.sh 01
-END_USAGE
+struct Race {
+    time: usize,
+    distance: usize,
 }
 
-if [ -z $NEW_DAY ]; then
-  echo "Provide ## for new day directory"
-	usage
-  exit 1
-fi
+// TODO: can I have a struct without a field? or impl methods on a non-struct?
+struct Races {
+    // TODO: why can't this be `[Race]`; I thought that was more flexible typing?
+    data: Vec<Race>,
+}
 
-cargo new "day-${NEW_DAY}" || usage
+impl Races {
+    fn new(content: &str) -> Self {
+        let time = vec![];
+        let distance = vec![];
+        let lines = content.lines().flat_map(f);
+        let data = vec![];
 
-cd "day-${NEW_DAY}"
-
-cargo add --path ../lib
-
-# create input files for testing and solving
-touch ./src/example.txt
-touch ./src/input.txt
-
-cat > src/main.rs <<EOF
-use std::{time::Instant, fs};
-use lib::get_part;
+        Races { data }
+    }
+}
 
 fn part_one() -> usize {
     0
@@ -67,10 +58,16 @@ mod tests {
     const EXAMPLE: &str = include_str!("./example.txt");
 
     #[test]
+    fn test_parsing() {
+        let races = Races::new(EXAMPLE);
+
+        assert_eq!(races.data.len(), 3);
+    }
+
+    #[test]
     fn test_part_one() {
         let ans = part_one();
 
         assert_eq!(ans, 0);
     }
 }
-EOF
