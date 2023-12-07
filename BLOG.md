@@ -1,8 +1,59 @@
 # What Am I Learning Each Day?
 
+### Day 6
+
+**Difficulty: 2/10 ★★☆☆☆☆☆☆☆☆**
+
+**Time: ~1 hr**
+
+**Run Time: ~594ms**
+
+I spent most of today trying to figure out the best way to parse the input.  I find this a bit intense:
+
+```rust
+let lines: Vec<_> = contents
+    .lines()
+    .map(|l| {
+        l.split_once(":")
+            .unwrap()
+            .1.split_whitespace()
+            .map(|x| { x.parse::<usize>().unwrap() })
+            .collect()
+    })
+    .collect();
+let time: &Vec<usize> = &lines[0];
+let dist: &Vec<usize> = &lines[1];
+
+let mut data = vec![];
+
+for (i, t) in time.iter().enumerate() {
+    data.push(Race { time: *t, dist: dist[i] });
+}
+```
+
+Maybe the first time I listened to the IDE and just used `Vec<_>` to infer(?); I'm still not sure why it's necessary; it's clearly a vec, and not clearly anything else, but seems to parse fine.
+
+I kind of wanted to use `zip` to merge the two iterables, but I can't imagine that would make it better.
+
+For part two, the answer was again mostly todo with parsing. I just ran the same function on it afterwards.
+
+One unknown is how I can get so many references here:
+
+```rust
+fn part_one(races: Vec<Race>) -> usize {
+    races.iter().map(|r: &Race| {
+        get_dist_for_hold(r.time).iter().filter(|x: &&usize| {
+            **x > r.dist
+        }).count()
+    }).product()
+}
+```
+
+`Race` is a reference, I get that, due to `.iter()`; I'm not sure how the inner `Vec<usize>` turns into a `&&usize` in the `.filter()`, or how to make the `**x` less silly.  The way I'm understanding this: it's a pointer to a pointer to a number value.
+
 ### Day 5
 
-**Difficulty: 7/10 ★★★★★★★★☆☆☆**
+**Difficulty: 7/10 ★★★★★★★☆☆☆**
 
 **Time: ~3 hr**
 
