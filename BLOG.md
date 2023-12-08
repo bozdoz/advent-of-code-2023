@@ -32,6 +32,27 @@ match (&self.hand, &other.hand) {
 
 That's crazy, and makes me think this was a bad idea.
 
+**However**, enums are comparable naturally by just adding the `PartialEq` and `PartialOrd` traits, and **ordering** the enum variants in **ASC** order:
+
+```rust
+#[derive(PartialEq, PartialOrd)]
+enum Hand {
+    HighCard,
+    Pair,
+    TwoPair,
+    Three,
+    FullHouse,
+    Four,
+    Five,
+}
+
+fn main() {
+    assert!(Hand::HighCard < Hand::Pair);
+    assert!(Hand::Pair == Hand::Pair);
+    assert!(Hand::Three > Hand::Pair);
+}
+```
+
 I think I may never use lifetimes...  I thought at first to make the hands a `&[u8]`, but that required a lifetime like `&'a [u8]`.  Anyway, a vector seems better.
 
 Made a nice create/update hashmap:
