@@ -1,5 +1,97 @@
 # What Am I Learning Each Day?
 
+### Day 7
+
+**Difficulty: 4/10 ★★★★☆☆☆☆☆☆**
+
+**Time: ~2 hr**
+
+**Run Time: ~2.3ms**
+
+Today I thought, let's use an enum.  
+
+I am not entirely clear what each `derive` trait is doing; I thought I had to make a custom `PartialOrd`, but turns out I can just derive it.
+
+I tried desperately to get `self.hand == other.hand` to work, but I can't figure out how to match enum variants that hold different data; other than:
+
+```rust
+// I can't believe I have to do this
+match (&self.hand, &other.hand) {
+    | (CamelType::HighCard(a), CamelType::HighCard(b))
+    | (CamelType::Pair(a), CamelType::Pair(b))
+    | (CamelType::TwoPair(a), CamelType::TwoPair(b))
+    | (CamelType::Three(a), CamelType::Three(b))
+    | (CamelType::FullHouse(a), CamelType::FullHouse(b))
+    | (CamelType::Four(a), CamelType::Four(b))
+    | (CamelType::Five(a), CamelType::Five(b)) => {
+        // check the cards (vec<u8> has `.cmp()`)
+        return a.cmp(&b);
+    }
+}
+```
+
+That's crazy, and makes me think this was a bad idea.
+
+I think I may never use lifetimes...  I thought at first to make the hands a `&[u8]`, but that required a lifetime like `&'a [u8]`.  Anyway, a vector seems better.
+
+Made a nice create/update hashmap:
+
+```rust
+let mut counts: HashMap<&u8, i32> = HashMap::new();
+
+for card in hand.iter() {
+    if let Some(x) = counts.get_mut(card) {
+        *x += 1;
+    } else {
+        counts.insert(card, 1);
+    }
+}
+```
+
+Today's solution for me was purely sorting.  For part 2 I just swapped the joker value: 
+
+```rust
+match c {
+    'A' => { 14 }
+    'K' => { 13 }
+    'Q' => { 12 }
+    'J' => { if part == 1 { 11 } else { 1 } }
+    'T' => { 10 }
+    n => n.to_digit(10).unwrap() as u8,
+}
+```
+
+And that's always included in the sorting comparison, due to the enum including data.
+
+I didn't like adding the `part: u8` flag everywhere.
+
+The logic for finding the best hand with jokers seemed simple to me: give the jokers to the card that has the highest count: if you have three of a kind, make it four.  Otherwise my categorizing logic wouldn't work:
+
+```rust
+// deduce the hand from the count grou
+match counts.len() {
+    1 => { CamelType::Five(hand) }
+    2 => {
+        if counts.values().any(|x| *x == 2) {
+            return CamelType::FullHouse(hand);
+        }
+        CamelType::Four(hand)
+    }
+    3 => {
+        if counts.values().any(|x| *x == 2) {
+            return CamelType::TwoPair(hand);
+        }
+        CamelType::Three(hand)
+    }
+    4 => { CamelType::Pair(hand) }
+    _ => { CamelType::HighCard(hand) }
+}
+```
+
+The only real questions there are FullHouse/Four and TwoPair/Three, which all depend on knowing if there's a card with a count of 2.
+
+I had way too many false positives in testing the sorting too.  It was a bummer.
+
 ### Day 6
 
 **Difficulty: 2/10 ★★☆☆☆☆☆☆☆☆**
