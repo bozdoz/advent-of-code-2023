@@ -15,7 +15,6 @@ New: `./createDay.sh 02`
 ### Help
 
 - [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
-- [CodeLLDB](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb)
-- ChatGPT
+- [ChatGPT](https://chat.openai.com)
 - [Reddit](https://reddit.com/r/adventofcode)
 - StackOverflow
