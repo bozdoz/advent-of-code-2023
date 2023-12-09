@@ -1,5 +1,90 @@
 # What Am I Learning Each Day?
 
+### Day 8
+
+**Difficulty: 3/10 ★★★☆☆☆☆☆☆☆**
+
+**Time: ~2 hr**
+
+**Run Time: ~5.4ms**
+
+I totally forgot about lcm (least common multiplier), and I'm sure I've solved a puzzle like this in previous years (though I can't find my implementation).
+
+I copied over some functions I found for implementing lcm, and part 2 seemed to work just fine.
+
+I thought today's parsing was pretty simple:
+
+```rust
+let mut elements = HashMap::new();
+
+for line in lines.skip(1) {
+    let key = &line[..3];
+    let left = &line[7..10];
+    let right = &line[12..15];
+
+    elements.insert(key, (left, right));
+}
+```
+
+First time using a view(?) on a slice(?).
+
+I was tempted to save the start_keys to the struct, but it worked a lot better to just supply that to the `count_path` function.
+
+I find it odd to get the last character of a &str:
+
+```rust
+if elem.0.chars().nth(2).unwrap() == 'A' {
+    Some(*elem.0)
+} else {
+    None
+}
+```
+
+I also found it frustrating to determine how and when to add the `mut` keyword, in the count_path function:
+
+```rust
+fn count_path(&self, key: &str) -> usize {
+    // iterate instructions, return # of iterations
+    let mut key = key;
+    let mut i = 0;
+    let len = self.instructions.len();
+
+    loop {
+        let (l, r) = self.elements.get(key).unwrap();
+
+        key = match self.instructions[i % len] {
+            Dir::L => { l }
+            Dir::R => { r }
+        };
+
+        i += 1;
+
+        if key.chars().nth(2).unwrap() == 'Z' {
+            return i;
+        }
+    }
+}
+```
+
+That `let mut key = key;` looks awfully strange to me, but the tests pass, so I guess it's great.
+
+Probably my first time using a `loop`.
+
+I did successfully, finally use lifetimes in the Network struct:
+
+```rust
+struct Network<'a> {
+    instructions: Vec<Dir>,
+    elements: HashMap<&'a str, (&'a str, &'a str)>,
+}
+
+impl Network<'_> {
+    fn new(contents: &str) -> Network<'_> {
+        // ...
+```
+
+I *think* what it means is that all the `&str` references should live as long as the Network instance.
+
 ### Day 7
 
 **Difficulty: 4/10 ★★★★☆☆☆☆☆☆**
