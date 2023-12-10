@@ -1,5 +1,61 @@
 # What Am I Learning Each Day?
 
+### Day 9
+
+**Difficulty: 1/10 ★☆☆☆☆☆☆☆☆☆**
+
+**Time: ~40 min**
+
+**Run Time: ~3.6ms**
+
+Got:
+
+```
+thread 'main' panicked at day-09/src/main.rs:36:48:
+is idiomatic: ParseIntError { kind: InvalidDigit }
+```
+
+Kind of funny to get that considering I read that `unwrap` is more of a TODO, and you should use `expect` instead:
+
+This was in my parser:
+
+```rust
+fn parse(contents: &str) -> Vec<Vec<isize>> {
+    contents
+        .lines()
+        .map(|l| {
+            l.split_whitespace()
+                .map(|x| x.parse().expect("is idiomatic"))
+                .collect()
+        })
+        .collect()
+}
+```
+
+I honestly don't really care about errors since this isn't a production app.
+
+And:
+
+```rust
+// now get the last value of all diffs
+let mut prediction = 0;
+
+for diff in diffs.iter().rev() {
+    prediction += diff.last().expect("is this what you like?");
+}
+
+prediction
+```
+
+Today I only really got tripped up by the parser (above), where I forgot the inner `.collect()`.  I also had to remember that `.rev()` is to reverse an iterable, but `.reverse()` is to reverse a vector.
+
+Also, I'm unsure of how performant this is to remove the last item from an iterable (double rev):
+
+```rust
+// rev'ing twice to skip last
+for (i, v) in cur.iter().rev().skip(1).rev().enumerate() {
+```
+
 ### Day 8
 
 **Difficulty: 3/10 ★★★☆☆☆☆☆☆☆**
