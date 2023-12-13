@@ -72,5 +72,12 @@ mod tests {
 
         assert_eq!(ans, 0);
     }
+
+    #[test]
+    fn test_part_two() {
+        let ans = part_two();
+
+        assert_eq!(ans, 0);
+    }
 }
 EOF
