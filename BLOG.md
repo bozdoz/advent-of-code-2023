@@ -1,5 +1,177 @@
 # What Am I Learning Each Day?
 
+### Day 10
+
+**Difficulty: 6/10 ★★★★★★☆☆☆☆**
+
+**Time: ~2 hrs**
+
+**Run Time: ~11.5ms**
+
+Had a few issues trying to figure out how to do something like this:
+
+```rust
+// iterate cells somehow as a mutable variable
+if let Some(v) = cells.get_mut(&starting_cell) {
+    // iterate cells somehow as immutable 🦀❗️
+    if let Some(v2) = cells.get(&v.neighbours[0]) {
+```
+
+But I "cannot borrow `cells` as immutable because it is also borrowed as mutable".  This is something that I could unquestionably do in any other language, and I have no idea how to go about it now.
+
+I've decided to do this, and maybe I'm better for it?
+
+```rust
+// find starting point neighbours
+let mut starting_point_neighbours: Vec<Point> = vec![];
+let top = starting_cell + Point { x: 0, y: -1 };
+let bottom = starting_cell + Point { x: 0, y: 1 };
+let left = starting_cell + Point { x: -1, y: 0 };
+let right = starting_cell + Point { x: 1, y: 0 };
+
+for neigh in [top, bottom, left, right] {
+    if let Some(v2) = cells.get(&neigh) {
+        if v2.neighbours.iter().any(|x| *x == starting_cell) {
+            starting_point_neighbours.push(neigh);
+        }
+    }
+}
+
+if let Some(v) = cells.get_mut(&starting_cell) {
+    v.neighbours = starting_point_neighbours
+}
+```
+
+I learned about `vec.retain`:
+
+```rust
+pub fn retain<F>(&mut self, f: F)
+where
+    F: FnMut(&T) -> bool,
+
+// Retains only the elements specified by the predicate
+```
+
+I had a loop for part one; for part two I realized I needed to loop again, but not for the same reason. Borrowing from the iterator I created for Day 3, I converted my loop into an iterator:
+
+```rust
+// a loop
+fn walk(&self) -> usize {
+    // move from starting_point
+    let start = self.get_cell(&self.starting_cell);
+    let mut prev = &self.starting_cell;
+    let mut cur = &start.neighbours[0];
+    let mut value = self.get_cell(cur);
+    let mut i = 1;
+
+    loop {
+        // get neighbour that isn't previous point
+        let next = value.neighbours.iter().find(|x| {
+            *x != prev
+        }).unwrap();
+
+        if *next == self.starting_cell {
+            return i + 1;
+        }
+
+        prev = cur;
+        cur = next;
+        value = self.get_cell(cur);
+        
+        i += 1;
+    }
+}
+```
+
+And here's the same code, implemented as an iterator (notice the lack of coupling with the count):
+
+```rust
+// Iterator
+struct GridLoop<'a> {
+    grid: &'a Grid,
+    prev: Option<Point>,
+    cur: Option<Point>,
+}
+
+// double lifetime
+impl<'a> GridLoop<'a> {
+    fn new(grid: &'a Grid) -> Self {
+        GridLoop { grid, prev: None, cur: None }
+    }
+}
+
+impl Iterator for GridLoop<'_> {
+    type Item = Point;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let start = self.grid.starting_cell;
+        
+        if self.prev.is_none() {
+            // start with cell next to starting cell
+            self.prev = Some(start);
+            self.cur = Some(self.grid.get_cell(&start).neighbours[0]);
+
+            return self.cur;
+        }
+
+        let cur = self.cur.unwrap();
+        
+        // finish if we reach the start
+        if cur == start {
+            return None;
+        }
+
+        // get next 
+        let prev = self.prev.unwrap();
+        let value = self.grid.get_cell(&cur);
+        let next = value.neighbours.iter().find(|x| {
+            // double de-reference again...
+            **x != prev
+        }).unwrap();
+
+        self.prev = Some(cur);
+        self.cur = Some(*next);
+
+        self.cur
+    }
+}
+```
+
+And now the `walk` function can just be:
+
+```rust
+fn walk_iter(&self) -> usize {
+    GridLoop::new(self).into_iter().count()
+}
+```
+
+I'm realizing I need to get better at reading math.  I find it hard to recognize sum and multiples and absolute numbers in the math notation.
+
+Oh, I also moved the Point struct to the shared lib:
+
+```rust
+use core::ops::Add;
+
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+pub struct Point {
+    pub x: isize,
+    pub y: isize,
+}
+
+impl Add for Point {
+    type Output = Point;
+
+    fn add(self, other: Point) -> Point {
+        Point {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+```
+
+A lot of this was copied directly from the documentation; though they use generics, and I'd like to avoid public module generics as much as possible, since my frustration with using it with **go**.
+
 ### Day 9
 
 **Difficulty: 1/10 ★☆☆☆☆☆☆☆☆☆**
