@@ -1,5 +1,66 @@
 # What Am I Learning Each Day?
 
+### Day 13
+
+**Difficulty: -/10 ★★★★★★☆☆☆☆**
+
+**Time: ~- hrs**
+
+**Run Time: ~-ms**
+
+I really liked my part one implementation but I realize it's a pain for part two. 
+
+I transposed a grid today:
+
+```rust
+let rows = grid.len();
+let cols = grid[0].len();
+
+let mut transposed: Vec<Vec<Item>> = vec![vec![Item::Ash; rows]; cols];
+
+for r in 0..rows  {
+    for c in 0..cols {
+        // Transpose the elements
+        transposed[c][r] = grid[r][c];
+    }
+}
+```
+
+I also had a good use of `zip`:
+
+```rust
+// pass grid or transposed to check rows or cols
+fn is_reflection_at(grid: &Vec<Vec<Item>>, i: usize) -> bool {
+    // expand outwards from index
+    let prev = grid.iter().rev().skip(grid.len() - i);
+    let next = grid.iter().skip(i + 2);
+
+    for (p, n) in prev.zip(next) {
+        if p != n {
+            return false
+        }
+    }
+
+    true
+}
+```
+
+And `windows`:
+
+```rust
+// size 2 means we look for side-by-side matches first
+for (i, row) in self.grid.windows(2).enumerate() {
+    if row[0] == row[1] {
+        // we have one pair; extend the search to pair everything
+        if Self::is_reflection_at(&self.grid, i) {
+            return Reflection::Horizontal(i + 1);
+        }
+    }
+}
+```
+
+For part two I realize it would be easier if I were comparing bits and checking if exactly 1 bit is different.
+
 ### Day 11
 
 **Difficulty: -/10 ★★★★★★☆☆☆☆**
@@ -183,6 +244,8 @@ impl Add for Point {
 ```
 
 A lot of this was copied directly from the documentation; though they use generics, and I'd like to avoid public module generics as much as possible, since my frustration with using it with **go**.
+
+Learned Shoelace Formula and Pick's Theorem.
 
 ### Day 9
 
