@@ -1,5 +1,17 @@
 # What Am I Learning Each Day?
 
+### Day 11
+
+**Difficulty: -/10 ★★★★★★☆☆☆☆**
+
+**Time: ~- hrs**
+
+**Run Time: ~-ms**
+
+Already, I'm upset to see the grid with stars.
+
+
+
 ### Day 10
 
 **Difficulty: 6/10 ★★★★★★☆☆☆☆**
