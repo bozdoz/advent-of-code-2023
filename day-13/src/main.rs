@@ -4,9 +4,11 @@ use lib::get_part;
 /** identify the direction of the reflection, with the col/row */
 enum Reflection {
     Horizontal(usize),
-    Vertical(usize)
+    Vertical(usize),
+    None
 }
 
+#[derive(Debug, PartialEq)]
 enum Item {
     Ash,
     Rock
@@ -39,14 +41,23 @@ impl Pattern {
         Self { grid }
     }
 
-    fn find_reflection_point() -> Reflection {
+    fn find_reflection_point(&self) -> Reflection {
+        // size 2 means we look for side-by-side matches first
+        dbg!(&self.grid);
+        for row in self.grid.windows(2) {
+            if row[0] == row[1] {
+                dbg!(row);
+            }            
+        }
 
-        Reflection::Horizontal(0)
+        // we might not have any reflection
+        Reflection::None
     }
 }
 
-fn part_one() -> usize {
-    0
+fn part_one(patterns: &Vec<Pattern>) -> usize {
+    patterns[0].find_reflection_point();
+    1
 }
 
 fn part_two() -> usize {
@@ -58,9 +69,11 @@ fn main() {
     let start = Instant::now();
     let contents = fs::read_to_string("./src/input.txt").unwrap();
 
+    let patterns = contents.lines().map(Pattern::new).collect();
+
     if one {
         let now = Instant::now();
-        let ans = part_one();
+        let ans = part_one(&patterns);
         println!("Part one: {:?} {:?}", ans, now.elapsed());
     }
 
@@ -81,7 +94,8 @@ mod tests {
 
     #[test]
     fn test_part_one() {
-        let ans = part_one();
+        let patterns = EXAMPLE.split("\n\n").map(Pattern::new).collect();
+        let ans = part_one(&patterns);
 
         assert_eq!(ans, 0);
     }
