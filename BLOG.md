@@ -1,5 +1,36 @@
 # What Am I Learning Each Day?
 
+### Day 14
+
+**Difficulty: -/10 ★★★★★★☆☆☆☆**
+
+**Time: ~- hrs**
+
+**Run Time: ~-ms**
+
+Doing another Vec<Vec<_>> for a grid.  Learned a bit about `Cell`, but ended up not using it. It was suggested to me to try this to update a grid from within a grid iteration:
+
+```rust
+let grid_cells = Cell::from_mut(grid.as_mut_slice()).as_slice_of_cells();
+for (y, row) in grid_cells.iter().enumerate() {
+  for (x, val) in row.as_slice_of_cells().iter().enumerate() {
+    grid_cells[y - 1][x].set(grid_cells[y - 1][x].get() + 1);
+  }
+}
+```
+
+It looks like a lot.
+
+What I ended up doing was:
+
+```rust
+let height = clone.grid.len();
+let width = clone.grid[0].len();
+for y in 1..height {
+    for x in 0..width {
+        let rock = &clone.grid[y][x];
+```
+
 ### Day 13
 
 **Difficulty: -/10 ★★★★★★☆☆☆☆**
