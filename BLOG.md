@@ -1,5 +1,57 @@
 # What Am I Learning Each Day?
 
+### Day 15
+
+**Difficulty: 2/10 ★★☆☆☆☆☆☆☆☆**
+
+**Time: ~2 hrs**
+
+**Run Time: ~1ms**
+
+Today seemed very hard to read.  I had to sit with the text for awhile, wondering what I was supposed to do.
+
+Today was my first day smuggling a side effect into a check that a parse worked correctly:
+
+```rust
+let mut action = Action::Add;
+let focal_len = focal_len.parse::<usize>();
+        
+let focal_len = if focal_len.is_ok() {
+    focal_len.unwrap()
+} else {
+    // side effects ?
+    action = Action::Remove;
+    0
+};
+```
+
+And that surprisingly seemed to work alright. 
+
+Most of the logic for today was directly in the part_two function, since part one was very simple.
+
+I still haven't made an array; I just keep making vectors, since I can't figure out how to make an array of a fixed size:
+
+```rust
+// don't know how to make this:
+// [Vec<Lens>, 256]
+let mut boxes: Vec<Vec<Lens>> = (0..256).map(|_| vec![]).collect()
+```
+
+I thought this would be simple, since it would be of a known size, but no.
+
+First time replacing a value in a vector:
+
+```rust
+let this = &mut boxes[lens.box_num];
+let some_index = this.iter().position(|x| x.label == lens.label);
+
+if let Some(index) = some_index {
+    // replace
+    this.remove(index);
+    this.insert(index, lens);
+}
+```
+
 ### Day 14
 
 **Difficulty: -/10 ★★★★★★☆☆☆☆**
