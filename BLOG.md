@@ -14,6 +14,35 @@ Somehow I am passing the part two example data, but not the input data.  First g
 
 The `Point` struct in the lib is getting much needier, now that it needs to derive the Ord and PartialOrd traits in order to be in a `BinaryHeap`.
 
+##### Update
+
+Found out that I was mutating the grid in part one, and passing that to part two.  After (barely) cleaning that up, it ran much slower, but gave the right answer.  Maybe depth first search would have been better?  I doubt it's worth the refactor (it isn't).
+
+Learned a couple of things:
+
+I can use `.max` directly on a number:
+
+```rust
+// instead of `if cur > best`
+best = best.max(cur);
+```
+
+Also that I should be able to implement `From` trait for types, to then use `into()` to transform them.
+
+Today was the first day I used a closure:
+
+```rust
+let mut run_it = |x, y, direction| {
+    let cloned = grid.traverse(BeamState {
+        direction,
+        point: Point { x: x as isize, y: y as isize },
+    });
+
+    // first time using max
+    best = best.max(cloned.get_energized());
+};
+```
+
 ### Day 15
 
 **Difficulty: 2/10 ★★☆☆☆☆☆☆☆☆**
