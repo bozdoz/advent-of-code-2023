@@ -1,5 +1,19 @@
 # What Am I Learning Each Day?
 
+### Day 16
+
+**Difficulty: 4/10 ★★★★☆☆☆☆☆☆**
+
+**Time: ~1 hrs**
+
+**Run Time: ~-ms**
+
+Part one was straight forward.  Part two took maybe 5-10 min of refactoring: Changed the `traverse` function to take the starting point as a parameter.
+
+Somehow I am passing the part two example data, but not the input data.  First guess was too low (used `grid.height` instead of `grid.height - 1`), but then second guess was too high.
+
+The `Point` struct in the lib is getting much needier, now that it needs to derive the Ord and PartialOrd traits in order to be in a `BinaryHeap`.
+
 ### Day 15
 
 **Difficulty: 2/10 ★★☆☆☆☆☆☆☆☆**

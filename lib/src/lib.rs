@@ -32,7 +32,7 @@ fn lerp(x: usize, x1: usize, x2: usize, y1: usize, y2: usize) -> usize {
     return y1 + ((y2 - y1) / (x2 - x1)) * (x - x1);
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord)]
 pub struct Point {
     pub x: isize,
     pub y: isize,
