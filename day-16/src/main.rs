@@ -35,17 +35,13 @@ struct BeamState {
 
 #[derive(Clone)]
 struct Grid {
-    cells: HashMap<Point, Tile>,
-    width: usize,
-    height: usize
+    cells: HashMap<Point, Tile>
 }
 
 impl Grid {
     fn new(contents: &str) -> Self {
         let mut cells = HashMap::new();
         let lines: Vec<&str> = contents.lines().collect();
-        let height = lines.len();
-        let width = lines[0].len();
 
         for (y, line) in lines.iter().enumerate() {
             for (x, char) in line.chars().enumerate() {
@@ -69,10 +65,13 @@ impl Grid {
             }
         }
 
-        Self { cells, width, height }
+        Self { cells }
     }
     // updates all tiles with the beams
-    fn traverse(&mut self, start: BeamState) {
+    fn traverse(&self, start: BeamState) -> Self {
+        // clone! 
+        let mut clone = self.clone();
+        // TODO: try using a plain vec instead to benchmark
         // get queue
         let mut queue: BinaryHeap<BeamState> = BinaryHeap::new();
 
@@ -80,7 +79,7 @@ impl Grid {
 
         // while queue...
         while let Some(state) = queue.pop() {
-            if let Some(tile) = self.cells.get_mut(&state.point) {
+            if let Some(tile) = clone.cells.get_mut(&state.point) {
                 // if tile already has beam direction, remove this path
                 if tile.beams & state.direction != 0 {
                     continue
@@ -94,11 +93,13 @@ impl Grid {
             }
 
             // get next states
-            let states = self.get_next_states(state);
+            let states = clone.get_next_states(state);
 
             // push states to queue
             states.iter().for_each(|s| queue.push(*s));
         }
+
+        clone
     }
     fn get_next_states(&self, state: BeamState) -> Vec<BeamState> {
         let tile = self.cells.get(&state.point);
@@ -127,25 +128,25 @@ impl Grid {
                 match state.direction {
                     UP => {
                         return vec![BeamState {
-                            direction: state.direction >> 1,
+                            direction: RIGHT,
                             point: state.point + Point { x: 1, y: 0 },
                         }];
                     }
                     RIGHT => { 
                         return vec![BeamState {
-                            direction: state.direction << 1,
+                            direction: UP,
                             point: state.point + Point { x: 0, y: -1 },
                         }];
                     }
                     DOWN => { 
                         return vec![BeamState {
-                            direction: state.direction >> 1,
+                            direction: LEFT,
                             point: state.point + Point { x: -1, y: 0 },
                         }];
                      }
                     LEFT => { 
                         return vec![BeamState {
-                            direction: state.direction << 1,
+                            direction: DOWN,
                             point: state.point + Point { x: 0, y: 1 },
                         }];
                      }
@@ -246,42 +247,40 @@ impl Grid {
     }
 }
 
-fn part_one(grid: &mut Grid) -> usize {
+fn part_one(grid: &Grid) -> usize {
     // start at top-left, pointing right
-    grid.traverse(BeamState {
+    let traversed = grid.traverse(BeamState {
         point: Point { x: 0, y: 0 },
         direction: RIGHT,
     });
 
-    grid.get_energized()
+    traversed.get_energized()
 }
 
-fn part_two(grid: &mut Grid) -> usize {
+fn part_two(grid: &Grid) -> usize {
     let mut best = 0;
 
     let mut run_it = |x, y, direction| {
-        let mut cloned = grid.clone();
-
-        cloned.traverse(BeamState {
+        let cloned = grid.traverse(BeamState {
             direction,
             point: Point { x: x as isize, y: y as isize },
         });
 
-        let cur = cloned.get_energized();
-
-        if cur > best {
-            best = cur;
-        }
+        // first time using max
+        best = best.max(cloned.get_energized());
     };
+
+    let height = grid.cells.keys().map(|c| c.y).max().unwrap();
+    let width = grid.cells.keys().map(|c| c.x).max().unwrap();
     
-    for x in 0..grid.width {
+    for x in 0..=width {
         run_it(x, 0, DOWN);
-        run_it(x, grid.height-1, UP);
+        run_it(x, height, UP);
     }
 
-    for y in 0..grid.height {
+    for y in 0..=height {
         run_it(0, y, RIGHT);
-        run_it(grid.width-1, y, LEFT);
+        run_it(width, y, LEFT);
     }
     
     best
@@ -292,17 +291,17 @@ fn main() {
     let start = Instant::now();
     let contents = fs::read_to_string("./src/input.txt").unwrap();
 
-    let mut grid = Grid::new(&contents);
+    let grid = Grid::new(&contents);
 
     if one {
         let now = Instant::now();
-        let ans = part_one(&mut grid);
+        let ans = part_one(&grid);
         println!("Part one: {:?} {:?}", ans, now.elapsed());
     }
 
     if two {
         let now = Instant::now();
-        let ans = part_two(&mut grid);
+        let ans = part_two(&grid);
         println!("Part two: {:?} {:?}", ans, now.elapsed());
     }
 
@@ -317,16 +316,16 @@ mod tests {
 
     #[test]
     fn test_part_one() {
-        let mut grid = Grid::new(EXAMPLE);
-        let ans = part_one(&mut grid);
+        let grid = Grid::new(EXAMPLE);
+        let ans = part_one(&grid);
 
         assert_eq!(ans, 46);
     }
 
     #[test]
     fn test_part_two() {
-        let mut grid = Grid::new(EXAMPLE);
-        let ans = part_two(&mut grid);
+        let grid = Grid::new(EXAMPLE);
+        let ans = part_two(&grid);
 
         assert_eq!(ans, 51);
     }
