@@ -1,5 +1,58 @@
 # What Am I Learning Each Day?
 
+### Day 18
+
+**Difficulty: 3/10 ★★★☆☆☆☆☆☆☆**
+
+**Time: ~1 hrs**
+
+**Run Time: ~774.292µs**
+
+**Part One** was copy paste from Day 10: Pick your Shoelaces.  I think I had to order the cells (should follow up on that): so I lazily created a Vec in addition to a HashMap.  Absolutely nothing remarkable about Part One.
+
+**Part Two**: refactor wasn't too bad.  
+
+Ran into a lifetime issue I was able to resolve by myself:
+
+```rust
+let get_instructions = if part == 1 {
+    |parts: Vec<&str>| {
+        let dir = parts[0].to_owned();
+        let steps = parts[1].parse::<isize>().expect("steps are a number");
+        
+        (dir, steps)
+    }
+} else {
+    |parts: Vec<&str>| {
+        let color = parts[2];
+        let dir = color[2..=7].to_owned();
+        let steps = color[8..].parse::<isize>().expect("thought it was a number");
+
+        (dir, steps)
+    }
+};
+```
+
+Here, the secret was the `to_owned` method on the `&str`.  Otherwise the references don't live long enough, and the error message was a bit ambiguous to figure out how to resolve it.  ChatGPT also had no clue.
+
+Learned how to parse hexadecimal in rust today:
+
+```rust
+let color = parts[2];
+let dir = usize::from_str_radix(&color[7..8], 16).expect("direction to be a number");
+let dir = match dir {
+    0 => "R",
+    1 => "D",
+    2 => "L",
+    3 => "U",
+    _ => panic!("can't find dir!")
+}.to_owned();
+let steps = usize::from_str_radix(&color[2..7], 16).expect("steps to be a number") as isize;
+```
+
+Felt a bit weird.
+
+
 ### Day 16
 
 **Difficulty: 4/10 ★★★★☆☆☆☆☆☆**
