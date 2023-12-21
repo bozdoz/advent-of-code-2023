@@ -17,4 +17,5 @@ New: `./createDay.sh 02`
 - [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
 - [ChatGPT](https://chat.openai.com)
 - [Reddit](https://reddit.com/r/adventofcode)
-- StackOverflow
+- [StackOverflow](https://stackoverflow.com/questions/tagged/rust)
+- [Discord](https://discord.com/invite/rust-lang-community)
