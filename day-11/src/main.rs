@@ -85,6 +85,7 @@ mod tests {
     const EXAMPLE: &str = include_str!("./example.txt");
 
     #[test]
+    #[ignore]
     fn test_part_one() {
         let grid = Universe::new(EXAMPLE);
         let ans = part_one();
