@@ -1,5 +1,49 @@
 # What Am I Learning Each Day?
 
+### Day 19
+
+**Difficulty: 5/10 ★★★☆☆☆☆☆☆☆**
+
+**Time: ~2 hrs**
+
+**Run Time: ~-**
+
+I hate parsing these things.
+
+This was the biggest data structure I've done so far.  I'm reasonably happy with being able to use `Ordering` enum for the rule comparisons:
+
+```rust
+struct Compare<'a> {
+    // not sure how I could make this a key of a struct
+    key: &'a str,
+    cmp: Ordering,
+    num: usize,
+}
+// later...
+if let Some(test) = &rule.test {
+    let val = part.get(test.key).expect("thought we had this key");
+
+    if val.cmp(&test.num) == test.cmp {
+        cur = rule.goto;
+        break;
+    }
+}
+```
+
+I still don't understand what `reduce` is, so I keep using `fold` which has a similar API to JavaScript.
+
+I got `trim_matches` and `split` working with multiple values:
+
+```rust
+let trim: &[_] = &['{', '}'];
+let rule_symbols: &[_] = &['<', '>', ':'];
+
+for workflow in workflow_str.lines() {
+    let mut details = workflow.split(trim).tak
+```
+
+Though I still don't get what that `&[_]` type is, and why it can't be inferred.
+
 ### Day 18
 
 **Difficulty: 3/10 ★★★☆☆☆☆☆☆☆**
