@@ -1,5 +1,32 @@
 # What Am I Learning Each Day?
 
+### Day 20
+
+**Difficulty: 5/10 ★★★☆☆☆☆☆☆☆**
+
+**Time: ~1 hrs**
+
+**Run Time: ~-**
+
+I would love to do this, but I can't wrap these variables in a closure:
+
+```rust
+let mut send = |module: &Module<'_>, pulse: Pulse| {
+    module.destinations.iter().for_each(|d| {
+        next.push((pulse, d));
+    });
+};
+```
+
+I get:
+
+```
+borrowed data escapes outside of closure
+`module` escapes the closure body here
+```
+
+Instead I need to duplicate code.
+
 ### Day 19
 
 **Difficulty: 5/10 ★★★☆☆☆☆☆☆☆**

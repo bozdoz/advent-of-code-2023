@@ -1,5 +1,5 @@
 use lib::get_part;
-use std::{collections::HashMap, fs, time::Instant, vec, mem};
+use std::{collections::HashMap, fs, time::Instant, vec};
 
 #[derive(Debug, Clone)]
 enum ModuleType {
@@ -100,7 +100,6 @@ impl<'a> Config<'a> {
         // button sends low to broadcaster
         let mut low = time;
         let mut high = 0;
-        let mut destinations: Vec<(Pulse, &str)> = vec![];
         let mut next_destinations: Vec<(Pulse, &str)> = vec![];
 
         for _ in 0..time {
@@ -117,7 +116,14 @@ impl<'a> Config<'a> {
                 let mut next: Vec<(Pulse, &str)> = vec![];
 
                 for (last_pulse, dest) in next_destinations {
-                    let module = modules.get(dest).expect("dest to exist");
+                    let module = modules.get(dest);
+
+                    if module.is_none() {
+                        // example data has "output" as a destination
+                        continue;
+                    }
+
+                    let module = module.unwrap();
 
                     match (last_pulse, &module.variant) {
                         (Pulse::Low, ModuleType::FlipFlop(onoff)) => {
@@ -127,30 +133,51 @@ impl<'a> Config<'a> {
                             // sends a low pulse.
                             let toggled = !onoff;
                             
-                            // TIL: I can get_mut when I need it, though this seems incredibly wasteful
+                            // ! TIL: I can get_mut when I need it, though this seems incredibly wasteful
 
-                            let module = modules.get_mut(dest).expect("dest to exist");
+                            let module = modules.get_mut(dest).unwrap();
                             module.variant = ModuleType::FlipFlop(toggled);
+                            module.last_pulse = if toggled {
+                                Pulse::High
+                            } else {
+                                Pulse::Low
+                            };
 
                             if toggled {
+                                high += module.destinations.len();
                                 module.destinations.iter().for_each(|d| {
                                     next.push((Pulse::High, d));
                                 });
                             } else {
+                                low += module.destinations.len();
                                 module.destinations.iter().for_each(|d| {
                                     next.push((Pulse::Low, d));
                                 });
                             }
                         }
                         (_, ModuleType::Conjunction) => {
+                            // they initially default to remembering a low pulse for each input
                             // Then, if it remembers high pulses for all inputs, 
                             // it sends a low pulse; otherwise, it sends a high pulse.
                             // look up receivers
-                            let all_high = &module.receivers.iter().any(|r| {
+                            let all_high = &module.receivers.iter().all(|r| {
                                 let pulse = &modules.get(r).expect("receiver").last_pulse;
 
-                                pulse == &Pulse::Low
+                                // None is equivalent to Low
+                                pulse == &Pulse::High
                             });
+
+                            if *all_high {
+                                low += module.destinations.len();
+                                module.destinations.iter().for_each(|d| {
+                                    next.push((Pulse::Low, d));
+                                });
+                            } else {
+                                high += module.destinations.len();
+                                module.destinations.iter().for_each(|d| {
+                                    next.push((Pulse::High, d));
+                                });
+                            }
                         }
                         _ => ()
                     }
@@ -201,12 +228,33 @@ mod tests {
     const EXAMPLE: &str = include_str!("./example.txt");
 
     #[test]
-    #[ignore]
+    fn test_single_press() {
+        let config = Config::new(EXAMPLE);
+
+        assert_eq!(config.push_button(1), 16);
+    }
+
+    #[test]
     fn test_part_one() {
         let config = Config::new(EXAMPLE);
         let ans = part_one(&config);
 
         assert_eq!(ans, 11687500);
+    }
+
+    const OTHER: &str = "broadcaster -> a, b, c
+%a -> b
+%b -> c
+%c -> inv
+&inv -> a
+";
+
+    #[test]
+    fn test_alt_example() {
+        let config = Config::new(OTHER);
+
+        assert_eq!(config.push_button(1), 8*4);
+        assert_eq!(config.push_button(1000), 32000000);
     }
 
     #[test]
