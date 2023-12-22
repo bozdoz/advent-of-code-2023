@@ -98,10 +98,43 @@ impl<'a> System<'a> {
 
         Self { workflows, parts }
     }
+
+    fn get_ratings(&self) -> usize {
+        let mut approved: Vec<&HashMap<&str, usize>> = vec![];
+        
+        for part in self.parts.iter() {
+            // start at 'in'
+            let mut cur = "in";
+
+            while cur != "A" && cur != "R" {
+                for rule in self.workflows.get(cur).expect("don't have cur").rules.iter() {
+                    if let Some(test) = &rule.test {
+                        let val = part.get(test.key).expect("thought we had this key");
+    
+                        if val.cmp(&test.num) == test.cmp {
+                            cur = rule.goto;
+                            break;
+                        }
+                    } else {
+                        // just goto
+                        cur = rule.goto;
+                        break;
+                    }
+                }
+            }
+            if cur == "A" {
+                approved.push(part);
+            }
+        }
+
+        approved.iter().fold(0, |acc, e| {
+            acc + e["x"] + e["m"] + e["a"] + e["s"]
+        })
+    }
 }
 
-fn part_one() -> usize {
-    0
+fn part_one(system: &System) -> usize {
+    system.get_ratings()
 }
 
 fn part_two() -> usize {
@@ -113,9 +146,11 @@ fn main() {
     let start = Instant::now();
     let contents = fs::read_to_string("./src/input.txt").unwrap();
 
+    let system = System::new(&contents);
+
     if one {
         let now = Instant::now();
-        let ans = part_one();
+        let ans = part_one(&system);
         println!("Part one: {:?} {:?}", ans, now.elapsed());
     }
 
@@ -136,9 +171,10 @@ mod tests {
 
     #[test]
     fn test_part_one() {
-        let ans = part_one();
+        let system = System::new(EXAMPLE);
+        let ans = part_one(&system);
 
-        assert_eq!(ans, 0);
+        assert_eq!(ans, 19114);
     }
 
     #[test]
