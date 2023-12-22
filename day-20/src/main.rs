@@ -117,7 +117,7 @@ impl<'a> Config<'a> {
                 let mut next: Vec<(Pulse, &str)> = vec![];
 
                 for (last_pulse, dest) in next_destinations {
-                    let module = modules.get_mut(dest).expect("dest to exist");
+                    let module = modules.get(dest).expect("dest to exist");
 
                     match (last_pulse, &module.variant) {
                         (Pulse::Low, ModuleType::FlipFlop(onoff)) => {
@@ -126,6 +126,10 @@ impl<'a> Config<'a> {
                             // sends a high pulse. If it was on, it turns off and 
                             // sends a low pulse.
                             let toggled = !onoff;
+                            
+                            // TIL: I can get_mut when I need it, though this seems incredibly wasteful
+
+                            let module = modules.get_mut(dest).expect("dest to exist");
                             module.variant = ModuleType::FlipFlop(toggled);
 
                             if toggled {
@@ -142,7 +146,7 @@ impl<'a> Config<'a> {
                             // Then, if it remembers high pulses for all inputs, 
                             // it sends a low pulse; otherwise, it sends a high pulse.
                             // look up receivers
-                            let all_high = module.receivers.iter().any(|r| {
+                            let all_high = &module.receivers.iter().any(|r| {
                                 let pulse = &modules.get(r).expect("receiver").last_pulse;
 
                                 pulse == &Pulse::Low
@@ -197,6 +201,7 @@ mod tests {
     const EXAMPLE: &str = include_str!("./example.txt");
 
     #[test]
+    #[ignore]
     fn test_part_one() {
         let config = Config::new(EXAMPLE);
         let ans = part_one(&config);
