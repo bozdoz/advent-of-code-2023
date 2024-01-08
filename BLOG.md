@@ -2,6 +2,67 @@
 
 ### Day 20
 
+**Difficulty: 9/10 ★★★★★★★★★★☆**
+
+**Time: ~7 hrs**
+
+**Run Time: ~26.4s**
+
+```sh
+Part one: 2210 796.384996ms
+Part two: 6522 25.638970522s
+Time: 26.442056157s
+```
+
+Ran into many difficulties with rust today: really not sure how to alter a HashMap from within a loop over that HashMap.
+
+TIL:
+
+```sh
+cargo test -- --nocapture
+```
+
+In order to immediately print logs
+
+Rust/Rust-analyzer can really take you for a ride in debugging.  For example, I had:
+
+![My annoying rust code](https://github.com/bozdoz/advent-of-code-2023/assets/1410985/6abd89b5-ef6b-4560-82f3-786d2e8bd808)
+
+It said `*n` and `*distance` were problems.  But really, if I fixed those it would complain about me consuming `self.weighted`; so the real fix is:
+
+```rust
+let neighbours = &weighted.unwrap().neighbours;
+```
+
+And the other two complaints go away.
+
+Curiously this puzzle took me awhile to brute force; then it took me awhile to come up with a better solution; then it still ran slow.
+
+TIL how to use a struct's methods as a local variable:
+
+```rust
+let get_next = if part == 1 {
+    Grid::get_next_states
+} else {
+    Grid::get_next_states_two
+};
+```
+
+Then I use it like:
+
+```rust
+let states = get_next(self, state);
+```
+
+I also learned that HashSet's can't Copy for some reason:
+
+```rust
+// TIL: need to clone because HashSet's can't Copy?
+states.iter().for_each(|s| queue.push(s.clone()));
+```
+
+### Day 20
+
 **Difficulty: 5/10 ★★★☆☆☆☆☆☆☆**
 
 **Time: ~1 hrs**
