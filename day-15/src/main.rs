@@ -1,4 +1,4 @@
-use std::{time::Instant, fs, ops::Index, vec};
+use std::{time::Instant, fs, vec};
 use lib::get_part;
 
 // focal length ranging from 1 through 9
