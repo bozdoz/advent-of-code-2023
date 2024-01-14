@@ -1,5 +1,17 @@
 # What Am I Learning Each Day?
 
+### Day 24
+
+**Difficulty: 5/10 ★★★★★★☆☆☆☆☆**
+
+**Time: ~3 hrs**
+
+**Run Time: ~8ms**
+
+Part One seemed alright.  I had a hard time with floats, and understanding that the hailstones intersect in the past (because they're not just straight lines).
+
+I have no idea how to do Part Two and will have to find out what other people did.
+
 ### Day 23
 
 **Difficulty: 9/10 ★★★★★★★★★★☆**
