@@ -60,10 +60,8 @@ fn bfs<'a>(akey: &'a str, bkey: &'a str, components: &'a Components) -> Vec<(&'a
 
         // ? can we check if any of these are in bkey's links?
         for next in links {
-            let mut path = vec![];
+            let mut path = state.path.clone();
 
-            // TIL
-            path.extend(state.path.iter());
             path.push((current, *next));
 
             if *next == bkey {
@@ -71,11 +69,7 @@ fn bfs<'a>(akey: &'a str, bkey: &'a str, components: &'a Components) -> Vec<(&'a
                 return path;
             }
 
-            let mut visited = HashSet::new();
-
-            for a in state.visited.iter() {
-                visited.insert(*a);
-            }
+            let mut visited = state.visited.clone();
 
             visited.insert(current);
 
@@ -119,20 +113,20 @@ fn bfs_everywhere<'a>(components: &'a Components) -> Vec<(&'a str, &'a str)> {
 
     // TODO: we can cache bfs from a to each val
     for (i, akey) in keys.iter().enumerate() {
-        for bkey in keys.iter().skip(i+1) {
-            if distances.contains_key(&Edge::from(akey, bkey)) {
+        for (j, bkey) in keys.iter().enumerate() {
+            if i == j {
                 continue;
             }
             // bfs
             let path = bfs(akey, bkey, components);
 
-            for (d, paths) in path.iter().rev().enumerate() {
+            for paths in path.iter() {
                 // sorting for hash
                 let v = Edge::from(paths.0, paths.1);
 
                 distances.entry(v).and_modify(|x| {
-                    *x += d+1;
-                }).or_insert(d+1);
+                    *x += 1;
+                }).or_insert(1);
             }
         }
     }
