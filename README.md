@@ -19,3 +19,4 @@ New: `./createDay.sh 02`
 - [Reddit](https://reddit.com/r/adventofcode)
 - [StackOverflow](https://stackoverflow.com/questions/tagged/rust)
 - [Discord](https://discord.com/invite/rust-lang-community)
+- [Codeium](https://codeium.com/)
