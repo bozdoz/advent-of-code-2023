@@ -386,15 +386,35 @@ For part two I realize it would be easier if I were comparing bits and checking 
 
 ### Day 11
 
-**Difficulty: -/10 ★★★★★★☆☆☆☆**
+**Difficulty: 5/10 ★★★★★★☆☆☆☆**
 
-**Time: ~- hrs**
+**Time: 3 hrs**
 
 **Run Time: ~-ms**
 
 Already, I'm upset to see the grid with stars.
 
+Came back in July and found a solution to the problem which worked; also, started using Codeium to try out AI IDE plugins, and it seems to work pretty well.
 
+The idea is that you can just get the manhattan distance as is, and apply the missing columns and rows in between:
+
+```rust
+let empty_x = self.empty_cols
+    .iter()
+    .filter(|x| **x >= min_x && **x <= max_x)
+    .count();
+let empty_y = self.empty_rows
+    .iter()
+    .filter(|y| **y >= min_y && **y <= max_y)
+    .count();
+
+let gap = gap_distance - 1;
+let dist = dx + empty_x * gap + dy + empty_y * gap;
+```
+
+And that's all.
+
+I still find it so frustrating to iterate a mutable hashmap; I have no idea how to do it.
 
 ### Day 10
 
