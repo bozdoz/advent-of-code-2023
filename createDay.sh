@@ -18,6 +18,10 @@ if [ -z $NEW_DAY ]; then
   exit 1
 fi
 
+# get session cookie; make sure you create this with:
+# COOKIE="Cookie: session=some-cookie-here"
+source ./session.sh
+
 cargo new "day-${NEW_DAY}" || usage
 
 cd "day-${NEW_DAY}"
@@ -26,10 +30,14 @@ cargo add --path ../lib
 
 # create input files for testing and solving
 touch ./src/example.txt
+curl "https://adventofcode.com/2023/day/${NEW_DAY}/input" --compressed -H "${COOKIE}" > ./src/input.txt
+
 touch ./src/input.txt
 
 cat > src/main.rs <<EOF
-use std::{time::Instant, fs};
+#![allow(unused)]
+
+use std::{ time::Instant, fs };
 use lib::get_part;
 
 fn part_one() -> usize {
@@ -43,7 +51,7 @@ fn part_two() -> usize {
 fn main() {
     let (one, two) = get_part();
     let start = Instant::now();
-    let contents = fs::read_to_string("./src/input.txt").unwrap();
+    let data = fs::read_to_string("./src/input.txt").unwrap();
 
     if one {
         let now = Instant::now();

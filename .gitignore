@@ -12,3 +12,7 @@ input.txt
 */README.md
 
 !/README.md
+
+# store your AOC session cookie here
+# COOKIE="Cookie: session=some-cookie-here"
+session.sh
