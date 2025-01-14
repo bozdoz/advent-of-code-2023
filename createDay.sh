@@ -30,9 +30,9 @@ cargo add --path ../lib
 
 # create input files for testing and solving
 touch ./src/example.txt
+touch ./src/input.txt
 curl "https://adventofcode.com/2023/day/${NEW_DAY}/input" --compressed -H "${COOKIE}" > ./src/input.txt
 
-touch ./src/input.txt
 
 cat > src/main.rs <<EOF
 #![allow(unused)]

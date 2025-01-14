@@ -1,11 +1,11 @@
 use lib::get_part;
-use std::{collections::HashMap, fs, time::Instant, vec};
+use std::{ collections::HashMap, fs, time::Instant, vec };
 
 #[derive(Debug, Clone)]
 enum ModuleType {
     FlipFlop(bool),
     Conjunction,
-    Broadcast
+    Broadcast,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -23,6 +23,7 @@ struct Module<'a> {
     last_pulse: Pulse,
 }
 
+#[derive(Debug)]
 struct Config<'a> {
     modules: HashMap<&'a str, Module<'a>>,
 }
@@ -42,43 +43,37 @@ impl<'a> Config<'a> {
             let receivers = vec![];
             let last_pulse = Pulse::None;
 
-            keys_destinations.insert(input.trim_matches(symbols), destinations.clone());
+            keys_destinations.insert(
+                input.trim_matches(symbols),
+                destinations.clone()
+            );
 
             match input {
                 "broadcaster" => {
-                    modules.insert(
-                        input,
-                        Module {
-                            destinations,
-                            receivers,
-                            last_pulse: Pulse::Low,
-                            variant: ModuleType::Broadcast,
-                        },
-                    );
-                },
+                    modules.insert(input, Module {
+                        destinations,
+                        receivers,
+                        last_pulse: Pulse::Low,
+                        variant: ModuleType::Broadcast,
+                    });
+                }
                 n if n.starts_with("%") => {
-                    modules.insert(
-                        &n[1..],
-                        Module {
-                            destinations,
-                            receivers,
-                            last_pulse,
-                            variant: ModuleType::FlipFlop(false),
-                        },
-                    );
-                },
+                    modules.insert(&n[1..], Module {
+                        destinations,
+                        receivers,
+                        last_pulse,
+                        variant: ModuleType::FlipFlop(false),
+                    });
+                }
                 n if n.starts_with("&") => {
-                    modules.insert(
-                        &n[1..],
-                        Module {
-                            destinations,
-                            receivers,
-                            last_pulse,
-                            variant: ModuleType::Conjunction,
-                        },
-                    );
-                },
-                _ => ()
+                    modules.insert(&n[1..], Module {
+                        destinations,
+                        receivers,
+                        last_pulse,
+                        variant: ModuleType::Conjunction,
+                    });
+                }
+                _ => unreachable!(),
             }
         });
 
@@ -97,19 +92,23 @@ impl<'a> Config<'a> {
     fn push_button(&self, time: usize) -> usize {
         // TODO: look for full circle
         let mut modules = self.modules.clone();
-        // button sends low to broadcaster
+        // button sends low to broadcaster, so low starts at `time`
         let mut low = time;
         let mut high = 0;
         let mut next_destinations: Vec<(Pulse, &str)> = vec![];
 
-        for _ in 0..time {
-            let broadcaster = modules.get("broadcaster").expect("broadcaster to exist");
-            
+        for i in 0..time {
+            let broadcaster = modules
+                .get("broadcaster")
+                .expect("broadcaster to exist");
+
             // broadcaster always sends low to destinations
             low += broadcaster.destinations.len();
             broadcaster.destinations.iter().for_each(|d| {
                 next_destinations.push((Pulse::Low, d));
             });
+
+            let mut rx_count = 0;
 
             // go through destinations
             while next_destinations.len() > 0 {
@@ -119,6 +118,7 @@ impl<'a> Config<'a> {
                     let module = modules.get(dest);
 
                     if module.is_none() {
+                        rx_count += 1;
                         // example data has "output" as a destination
                         continue;
                     }
@@ -127,12 +127,12 @@ impl<'a> Config<'a> {
 
                     match (last_pulse, &module.variant) {
                         (Pulse::Low, ModuleType::FlipFlop(onoff)) => {
-                            // if a flip-flop module receives a low pulse, it flips 
-                            // between on and off. If it was off, it turns on and 
-                            // sends a high pulse. If it was on, it turns off and 
+                            // if a flip-flop module receives a low pulse, it flips
+                            // between on and off. If it was off, it turns on and
+                            // sends a high pulse. If it was on, it turns off and
                             // sends a low pulse.
                             let toggled = !onoff;
-                            
+
                             // ! TIL: I can get_mut when I need it, though this seems incredibly wasteful
 
                             let module = modules.get_mut(dest).unwrap();
@@ -157,35 +157,47 @@ impl<'a> Config<'a> {
                         }
                         (_, ModuleType::Conjunction) => {
                             // they initially default to remembering a low pulse for each input
-                            // Then, if it remembers high pulses for all inputs, 
+                            // Then, if it remembers high pulses for all inputs,
                             // it sends a low pulse; otherwise, it sends a high pulse.
                             // look up receivers
                             let all_high = &module.receivers.iter().all(|r| {
-                                let pulse = &modules.get(r).expect("receiver").last_pulse;
+                                let pulse = &modules
+                                    .get(r)
+                                    .expect("receiver").last_pulse;
 
                                 // None is equivalent to Low
                                 pulse == &Pulse::High
                             });
 
+                            let module = modules.get_mut(dest).unwrap();
+
                             if *all_high {
                                 low += module.destinations.len();
+                                module.last_pulse = Pulse::Low;
                                 module.destinations.iter().for_each(|d| {
                                     next.push((Pulse::Low, d));
                                 });
                             } else {
                                 high += module.destinations.len();
+                                module.last_pulse = Pulse::High;
                                 module.destinations.iter().for_each(|d| {
                                     next.push((Pulse::High, d));
                                 });
                             }
                         }
-                        _ => ()
+                        _ => {}
                     }
                 }
 
                 next_destinations = next;
             }
+
+            if rx_count == 1 {
+                return i;
+            }
         }
+
+        println!("LOW * HIGH");
 
         low * high
     }
@@ -195,8 +207,8 @@ fn part_one(config: &Config) -> usize {
     config.push_button(1000)
 }
 
-fn part_two() -> usize {
-    0
+fn part_two(config: &Config) -> usize {
+    config.push_button(1_000_000_000_000)
 }
 
 fn main() {
@@ -214,7 +226,7 @@ fn main() {
 
     if two {
         let now = Instant::now();
-        let ans = part_two();
+        let ans = part_two(&config);
         println!("Part two: {:?} {:?}", ans, now.elapsed());
     }
 
@@ -237,12 +249,14 @@ mod tests {
     #[test]
     fn test_part_one() {
         let config = Config::new(EXAMPLE);
+
         let ans = part_one(&config);
 
         assert_eq!(ans, 11687500);
     }
 
-    const OTHER: &str = "broadcaster -> a, b, c
+    const OTHER: &str =
+        "broadcaster -> a, b, c
 %a -> b
 %b -> c
 %c -> inv
@@ -253,14 +267,7 @@ mod tests {
     fn test_alt_example() {
         let config = Config::new(OTHER);
 
-        assert_eq!(config.push_button(1), 8*4);
+        assert_eq!(config.push_button(1), 8 * 4);
         assert_eq!(config.push_button(1000), 32000000);
-    }
-
-    #[test]
-    fn test_part_two() {
-        let ans = part_two();
-
-        assert_eq!(ans, 0);
     }
 }
