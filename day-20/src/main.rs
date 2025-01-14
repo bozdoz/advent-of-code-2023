@@ -1,5 +1,31 @@
 use lib::get_part;
-use std::{ collections::HashMap, fs, time::Instant, vec };
+use std::{ collections::HashMap, fs, time::Instant, usize, vec };
+
+struct Stamp {
+    map: HashMap<String, usize>,
+    next: usize,
+}
+
+// from chatgpt
+impl Stamp {
+    fn new() -> Self {
+        Self { map: HashMap::new(), next: 0 }
+    }
+    fn get(&self, input: &str) -> Option<usize> {
+        self.map.get(input).and_then(|&x| Some(x))
+    }
+
+    fn stamp(&mut self, input: &str) -> usize {
+        if let Some(&value) = self.map.get(input) {
+            value
+        } else {
+            let value = self.next;
+            self.map.insert(input.to_string(), value);
+            self.next += 1;
+            value
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 enum ModuleType {
@@ -16,41 +42,52 @@ enum Pulse {
 }
 
 #[derive(Debug, Clone)]
-struct Module<'a> {
-    receivers: Vec<&'a str>,
-    destinations: Vec<&'a str>,
+struct Module {
+    receivers: Vec<usize>,
+    destinations: Vec<usize>,
     variant: ModuleType,
     last_pulse: Pulse,
 }
 
 #[derive(Debug)]
-struct Config<'a> {
-    modules: HashMap<&'a str, Module<'a>>,
+struct Config {
+    modules: Vec<Module>,
+    output: usize,
+    broadcaster: usize,
 }
 
-impl<'a> Config<'a> {
-    fn new(contents: &'a str) -> Self {
-        let mut modules = HashMap::new();
+impl Config {
+    fn new(contents: &str) -> Self {
+        // convert str to u8
+        let stamp = &mut Stamp::new();
+
+        // rx never turns into a module, so we don't want the usize messing with the vec index
+        stamp.map.insert("rx".to_string(), usize::MAX);
+
+        let mut module_map = HashMap::new();
         let mut keys_destinations = HashMap::new();
+
         // still not sure what this type is
         let symbols: &[_] = &['%', '&'];
 
         contents.lines().for_each(|line| {
             let (input, output) = line.split_once(" -> ").expect("an arrow");
 
-            let destinations: Vec<&str> = output.split(", ").collect();
+            let destinations: Vec<_> = output
+                .split(", ")
+                .map(|x| stamp.stamp(x))
+                .collect();
             // receivers will be unknown until we loop again afterward
             let receivers = vec![];
             let last_pulse = Pulse::None;
 
-            keys_destinations.insert(
-                input.trim_matches(symbols),
-                destinations.clone()
-            );
+            let key = stamp.stamp(input.trim_matches(symbols));
+
+            keys_destinations.insert(key, destinations.clone());
 
             match input {
                 "broadcaster" => {
-                    modules.insert(input, Module {
+                    module_map.insert(key, Module {
                         destinations,
                         receivers,
                         last_pulse: Pulse::Low,
@@ -58,7 +95,7 @@ impl<'a> Config<'a> {
                     });
                 }
                 n if n.starts_with("%") => {
-                    modules.insert(&n[1..], Module {
+                    module_map.insert(key, Module {
                         destinations,
                         receivers,
                         last_pulse,
@@ -66,7 +103,7 @@ impl<'a> Config<'a> {
                     });
                 }
                 n if n.starts_with("&") => {
-                    modules.insert(&n[1..], Module {
+                    module_map.insert(key, Module {
                         destinations,
                         receivers,
                         last_pulse,
@@ -77,53 +114,69 @@ impl<'a> Config<'a> {
             }
         });
 
-        // TODO: gather linked modules
         // this is a pain
         for (key, destinations) in keys_destinations {
             for dest in destinations {
-                if let Some(module) = modules.get_mut(dest) {
+                if let Some(module) = module_map.get_mut(&dest) {
                     module.receivers.push(key);
                 }
             }
         }
 
-        Self { modules }
+        let modules = (0..)
+            .map_while(|i| {
+                if let Some(module) = module_map.get(&i) {
+                    // crazy
+                    Some(module.clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // rx might not exist
+        let unknown = stamp.stamp("UNKNOWN");
+        let output = *stamp.map
+            .get("output")
+            .or(stamp.map.get("rx"))
+            .unwrap_or(&unknown);
+
+        Self {
+            modules,
+            output,
+            broadcaster: stamp.get("broadcaster").expect("broadcaster"),
+        }
     }
+
     fn push_button(&self, time: usize) -> usize {
-        // TODO: look for full circle
         let mut modules = self.modules.clone();
-        // button sends low to broadcaster, so low starts at `time`
-        let mut low = time;
+
+        let broadcaster = &modules[self.broadcaster];
+
+        // button sends low to broadcaster, so low starts at `time`, plus all the
+        // pulses broadcaster *will* send
+        let mut low = time + broadcaster.destinations.len() * time;
         let mut high = 0;
-        let mut next_destinations: Vec<(Pulse, &str)> = vec![];
+        // broadcaster always sends low to destinations
+        let broadcasts = broadcaster.destinations
+            .iter()
+            .map(|&d| { (Pulse::Low, d) })
+            .collect::<Vec<_>>();
 
-        for i in 0..time {
-            let broadcaster = modules
-                .get("broadcaster")
-                .expect("broadcaster to exist");
-
-            // broadcaster always sends low to destinations
-            low += broadcaster.destinations.len();
-            broadcaster.destinations.iter().for_each(|d| {
-                next_destinations.push((Pulse::Low, d));
-            });
-
-            let mut rx_count = 0;
+        for _ in 0..time {
+            let mut next_destinations = broadcasts.clone();
 
             // go through destinations
             while next_destinations.len() > 0 {
-                let mut next: Vec<(Pulse, &str)> = vec![];
+                let mut next: Vec<(Pulse, usize)> = vec![];
 
-                for (last_pulse, dest) in next_destinations {
-                    let module = modules.get(dest);
-
-                    if module.is_none() {
-                        rx_count += 1;
+                for (last_pulse, dest) in next_destinations.iter() {
+                    if *dest == self.output {
                         // example data has "output" as a destination
                         continue;
                     }
 
-                    let module = module.unwrap();
+                    let module = &modules[*dest];
 
                     match (last_pulse, &module.variant) {
                         (Pulse::Low, ModuleType::FlipFlop(onoff)) => {
@@ -135,7 +188,7 @@ impl<'a> Config<'a> {
 
                             // ! TIL: I can get_mut when I need it, though this seems incredibly wasteful
 
-                            let module = modules.get_mut(dest).unwrap();
+                            let module = modules.get_mut(*dest).unwrap();
                             module.variant = ModuleType::FlipFlop(toggled);
                             module.last_pulse = if toggled {
                                 Pulse::High
@@ -145,14 +198,18 @@ impl<'a> Config<'a> {
 
                             if toggled {
                                 high += module.destinations.len();
-                                module.destinations.iter().for_each(|d| {
-                                    next.push((Pulse::High, d));
-                                });
+                                next.extend(
+                                    module.destinations
+                                        .iter()
+                                        .map(|&d| { (Pulse::High, d) })
+                                );
                             } else {
                                 low += module.destinations.len();
-                                module.destinations.iter().for_each(|d| {
-                                    next.push((Pulse::Low, d));
-                                });
+                                next.extend(
+                                    module.destinations
+                                        .iter()
+                                        .map(|&d| { (Pulse::Low, d) })
+                                );
                             }
                         }
                         (_, ModuleType::Conjunction) => {
@@ -160,46 +217,139 @@ impl<'a> Config<'a> {
                             // Then, if it remembers high pulses for all inputs,
                             // it sends a low pulse; otherwise, it sends a high pulse.
                             // look up receivers
-                            let all_high = &module.receivers.iter().all(|r| {
-                                let pulse = &modules
-                                    .get(r)
-                                    .expect("receiver").last_pulse;
-
+                            let all_high = &module.receivers.iter().all(|&r| {
                                 // None is equivalent to Low
-                                pulse == &Pulse::High
+                                &modules[r].last_pulse == &Pulse::High
                             });
 
-                            let module = modules.get_mut(dest).unwrap();
+                            let module = modules.get_mut(*dest).unwrap();
 
                             if *all_high {
                                 low += module.destinations.len();
                                 module.last_pulse = Pulse::Low;
-                                module.destinations.iter().for_each(|d| {
-                                    next.push((Pulse::Low, d));
-                                });
+                                next.extend(
+                                    module.destinations
+                                        .iter()
+                                        .map(|&d| { (Pulse::Low, d) })
+                                );
                             } else {
                                 high += module.destinations.len();
                                 module.last_pulse = Pulse::High;
-                                module.destinations.iter().for_each(|d| {
-                                    next.push((Pulse::High, d));
-                                });
+                                next.extend(
+                                    module.destinations
+                                        .iter()
+                                        .map(|&d| { (Pulse::High, d) })
+                                );
                             }
                         }
                         _ => {}
                     }
                 }
 
-                next_destinations = next;
-            }
-
-            if rx_count == 1 {
-                return i;
+                // is mem swap faster?
+                std::mem::swap(&mut next_destinations, &mut next);
             }
         }
 
-        println!("LOW * HIGH");
-
         low * high
+    }
+
+    fn get_cycles_for_rx(&self) -> [usize; 4] {
+        let mut modules = self.modules.clone();
+
+        let broadcaster = &modules[self.broadcaster];
+
+        // broadcaster always sends low to destinations
+        let broadcasts = broadcaster.destinations
+            .iter()
+            .map(|&d| { (Pulse::Low, d) })
+            .collect::<Vec<_>>();
+
+        for _ in 0.. {
+            let mut next_destinations = broadcasts.clone();
+
+            // go through destinations
+            while next_destinations.len() > 0 {
+                let mut next: Vec<(Pulse, usize)> = vec![];
+
+                for (last_pulse, dest) in next_destinations.iter() {
+                    if *dest == self.output {
+                        // example data has "output" as a destination
+                        continue;
+                    }
+
+                    let module = &modules[*dest];
+
+                    match (last_pulse, &module.variant) {
+                        (Pulse::Low, ModuleType::FlipFlop(onoff)) => {
+                            // if a flip-flop module receives a low pulse, it flips
+                            // between on and off. If it was off, it turns on and
+                            // sends a high pulse. If it was on, it turns off and
+                            // sends a low pulse.
+                            let toggled = !onoff;
+
+                            // ! TIL: I can get_mut when I need it, though this seems incredibly wasteful
+
+                            let module = modules.get_mut(*dest).unwrap();
+                            module.variant = ModuleType::FlipFlop(toggled);
+                            module.last_pulse = if toggled {
+                                Pulse::High
+                            } else {
+                                Pulse::Low
+                            };
+
+                            if toggled {
+                                next.extend(
+                                    module.destinations
+                                        .iter()
+                                        .map(|&d| { (Pulse::High, d) })
+                                );
+                            } else {
+                                next.extend(
+                                    module.destinations
+                                        .iter()
+                                        .map(|&d| { (Pulse::Low, d) })
+                                );
+                            }
+                        }
+                        (_, ModuleType::Conjunction) => {
+                            // they initially default to remembering a low pulse for each input
+                            // Then, if it remembers high pulses for all inputs,
+                            // it sends a low pulse; otherwise, it sends a high pulse.
+                            // look up receivers
+                            let all_high = &module.receivers.iter().all(|&r| {
+                                // None is equivalent to Low
+                                &modules[r].last_pulse == &Pulse::High
+                            });
+
+                            let module = modules.get_mut(*dest).unwrap();
+
+                            if *all_high {
+                                module.last_pulse = Pulse::Low;
+                                next.extend(
+                                    module.destinations
+                                        .iter()
+                                        .map(|&d| { (Pulse::Low, d) })
+                                );
+                            } else {
+                                module.last_pulse = Pulse::High;
+                                next.extend(
+                                    module.destinations
+                                        .iter()
+                                        .map(|&d| { (Pulse::High, d) })
+                                );
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
+                // is mem swap faster?
+                std::mem::swap(&mut next_destinations, &mut next);
+            }
+        }
+
+        [1, 1, 1, 1]
     }
 }
 
@@ -208,7 +358,9 @@ fn part_one(config: &Config) -> usize {
 }
 
 fn part_two(config: &Config) -> usize {
-    config.push_button(1_000_000_000_000)
+    let vals = config.get_cycles_for_rx();
+
+    vals.iter().product()
 }
 
 fn main() {
@@ -264,10 +416,16 @@ mod tests {
 ";
 
     #[test]
-    fn test_alt_example() {
+    fn test_alt_once() {
         let config = Config::new(OTHER);
 
         assert_eq!(config.push_button(1), 8 * 4);
+    }
+
+    #[test]
+    fn test_alt_one_thousand() {
+        let config = Config::new(OTHER);
+
         assert_eq!(config.push_button(1000), 32000000);
     }
 }
