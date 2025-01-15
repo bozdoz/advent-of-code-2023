@@ -75,11 +75,76 @@ states.iter().for_each(|s| queue.push(s.clone()));
 
 ### Day 20
 
-**Difficulty: 5/10 ★★★☆☆☆☆☆☆☆**
+**Difficulty: 9/10 ★★★★★★★★★☆**
 
-**Time: ~1 hrs**
+**Time: ~6 hrs**
 
-**Run Time: ~-**
+**Run Time: ~16ms**
+
+UPDATE:
+
+Finally did it.  The big issue was not tracking the pulse in conjunctions:
+
+```rust
+if *all_high {
+    low += module.destinations.len();
+    module.last_pulse = Pulse::Low;
+    next.extend(
+        module.destinations
+            .iter()
+            .map(|&d| { (Pulse::Low, d) })
+    );
+} else {
+    high += module.destinations.len();
+    module.last_pulse = Pulse::High;
+    next.extend(
+        module.destinations
+            .iter()
+            .map(|&d| { (Pulse::High, d) })
+    );
+}
+```
+
+After that I found out I can get the lowest number of button presses to get each conjunction that funnels into rx:
+
+```rust
+if all_high {
+    // sender needs to send low pulse; so receivers all need to send high
+    module.last_pulse = Pulse::Low;
+    next.extend(
+        module.destinations
+            .iter()
+            .map(|&d| { (Pulse::Low, d) })
+    );
+} else {
+    // all receivers need to send high pulses to get the sender to send a low
+    if receivers.contains_key(dest) {
+        receivers.entry(*dest).and_modify(|x| {
+            if *x == 0 {
+                *x = i;
+            }
+        });
+
+        if
+            receivers
+                .iter()
+                .all(|(_, v)| { *v != 0 })
+        {
+            break 'madness;
+        }
+    }
+
+    module.last_pulse = Pulse::High;
+    next.extend(
+        module.destinations
+            .iter()
+            .map(|&d| { (Pulse::High, d) })
+    );
+}
+}
+```
+
+I also made a `stamp` function which helps to convert a str to a vector index.  That halved the run time.  I tried `Arc` for the vecs, but that didn't help.  Maybe I'm not doing enough cloning for it to matter
 
 I would love to do this, but I can't wrap these variables in a closure:
 

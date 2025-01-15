@@ -7,6 +7,7 @@ struct Stamp {
 }
 
 // from chatgpt
+// using a function to convert string to usize
 impl Stamp {
     fn new() -> Self {
         Self { map: HashMap::new(), next: 0 }
@@ -61,7 +62,7 @@ impl Config {
         // convert str to u8
         let stamp = &mut Stamp::new();
 
-        // rx never turns into a module, so we don't want the usize messing with the vec index
+        // rx never turns into a module, so we don't want the usize messing with the vec indexing
         stamp.map.insert("rx".to_string(), usize::MAX);
 
         let mut module_map = HashMap::new();
@@ -123,10 +124,11 @@ impl Config {
             }
         }
 
+        // converts the hashmap to a vector
         let modules = (0..)
             .map_while(|i| {
                 if let Some(module) = module_map.get(&i) {
-                    // crazy
+                    // crazy to have to clone this
                     Some(module.clone())
                 } else {
                     None
@@ -254,7 +256,7 @@ impl Config {
         low * high
     }
 
-    fn get_cycles_for_rx(&self) -> [usize; 4] {
+    fn get_cycles_for_rx(&self) -> Vec<i32> {
         let mut modules = self.modules.clone();
 
         let broadcaster = &modules[self.broadcaster];
@@ -265,7 +267,18 @@ impl Config {
             .map(|&d| { (Pulse::Low, d) })
             .collect::<Vec<_>>();
 
-        for _ in 0.. {
+        // find the sender for rx
+        let sender = modules
+            .iter()
+            .find(|x| { x.destinations.contains(&self.output) })
+            .unwrap();
+
+        // find the senders for that (jq) (4 of them, and they're all conjunction)
+        let mut receivers: HashMap<usize, i32> = HashMap::from_iter(
+            sender.receivers.iter().map(|&x| (x, 0))
+        );
+
+        'madness: for i in 1..1_000_000 {
             let mut next_destinations = broadcasts.clone();
 
             // go through destinations
@@ -282,13 +295,7 @@ impl Config {
 
                     match (last_pulse, &module.variant) {
                         (Pulse::Low, ModuleType::FlipFlop(onoff)) => {
-                            // if a flip-flop module receives a low pulse, it flips
-                            // between on and off. If it was off, it turns on and
-                            // sends a high pulse. If it was on, it turns off and
-                            // sends a low pulse.
                             let toggled = !onoff;
-
-                            // ! TIL: I can get_mut when I need it, though this seems incredibly wasteful
 
                             let module = modules.get_mut(*dest).unwrap();
                             module.variant = ModuleType::FlipFlop(toggled);
@@ -313,18 +320,16 @@ impl Config {
                             }
                         }
                         (_, ModuleType::Conjunction) => {
-                            // they initially default to remembering a low pulse for each input
-                            // Then, if it remembers high pulses for all inputs,
-                            // it sends a low pulse; otherwise, it sends a high pulse.
-                            // look up receivers
-                            let all_high = &module.receivers.iter().all(|&r| {
-                                // None is equivalent to Low
-                                &modules[r].last_pulse == &Pulse::High
-                            });
+                            let all_high = module.receivers
+                                .iter()
+                                .all(|&r| {
+                                    modules[r].last_pulse == Pulse::High
+                                });
 
                             let module = modules.get_mut(*dest).unwrap();
 
-                            if *all_high {
+                            if all_high {
+                                // sender needs to send low pulse; so receivers all need to send high
                                 module.last_pulse = Pulse::Low;
                                 next.extend(
                                     module.destinations
@@ -332,6 +337,23 @@ impl Config {
                                         .map(|&d| { (Pulse::Low, d) })
                                 );
                             } else {
+                                // all receivers need to send high pulses to get the sender to send a low
+                                if receivers.contains_key(dest) {
+                                    receivers.entry(*dest).and_modify(|x| {
+                                        if *x == 0 {
+                                            *x = i;
+                                        }
+                                    });
+
+                                    if
+                                        receivers
+                                            .iter()
+                                            .all(|(_, v)| { *v != 0 })
+                                    {
+                                        break 'madness;
+                                    }
+                                }
+
                                 module.last_pulse = Pulse::High;
                                 next.extend(
                                     module.destinations
@@ -349,7 +371,10 @@ impl Config {
             }
         }
 
-        [1, 1, 1, 1]
+        receivers
+            .iter()
+            .map(|(_, v)| { *v })
+            .collect::<Vec<_>>()
     }
 }
 
@@ -358,9 +383,12 @@ fn part_one(config: &Config) -> usize {
 }
 
 fn part_two(config: &Config) -> usize {
-    let vals = config.get_cycles_for_rx();
-
-    vals.iter().product()
+    // wow, blown away that this worked
+    config
+        .get_cycles_for_rx()
+        .iter()
+        .map(|x| *x as usize)
+        .product()
 }
 
 fn main() {
